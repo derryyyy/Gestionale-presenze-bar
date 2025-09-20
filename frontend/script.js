@@ -48,24 +48,12 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function initializeApp() {
   try {
-    // Controlla se c'è un utente salvato nel localStorage
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      AppState.currentUser = JSON.parse(savedUser);
-      showDashboard();
-      await loadShifts();
-      await updateStats();
-    } else {
-      showWelcomeScreen();
-    }
+    // Mostra sempre la schermata di benvenuto
+    showWelcomeScreen();
     
-    // Controlla se c'è un userId nell'URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('user') || window.location.pathname.split('/user/')[1];
-    
-    if (userId && !AppState.currentUser) {
-      await loadUserFromId(userId);
-    }
+    // Precarica i turni per performance
+    await loadShifts();
+    await updateStats();
     
   } catch (error) {
     console.error('Errore durante l\'inizializzazione:', error);
@@ -73,32 +61,7 @@ async function initializeApp() {
   }
 }
 
-/**
- * Carica un utente tramite ID
- */
-async function loadUserFromId(userId) {
-  try {
-    const response = await fetch(`/api/users/${userId}`);
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success) {
-        AppState.currentUser = result.data;
-        localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
-        showDashboard();
-        await loadShifts();
-        await updateStats();
-      } else {
-        throw new Error(result.message || 'Utente non trovato');
-      }
-    } else {
-      throw new Error('Utente non trovato');
-    }
-  } catch (error) {
-    console.error('Errore nel caricamento utente:', error);
-    showError('Utente non trovato o link non valido');
-    showWelcomeScreen();
-  }
-}
+// Funzione rimossa - non più necessaria senza login
 
 /**
  * Mostra la schermata di benvenuto
@@ -115,68 +78,23 @@ function showWelcomeScreen() {
 function showDashboard() {
   elements.welcomeScreen.style.display = 'none';
   elements.dashboard.style.display = 'block';
-  elements.userInfo.style.display = 'flex';
-  
-  if (AppState.currentUser) {
-    elements.userName.textContent = AppState.currentUser.name;
-  }
+  elements.userInfo.style.display = 'none'; // Nascondi info utente
 }
 
 /**
- * Gestisce il submit del form utente
+ * Avvia l'applicazione senza login
  */
-elements.userForm.addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  const formData = new FormData(e.target);
-  const userData = {
-    name: formData.get('name'),
-    email: formData.get('email'),
-    discordId: formData.get('discordId')
-  };
-  
-  try {
-    showLoadingOverlay();
-    
-    const response = await fetch('/api/users/generate-link', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(userData)
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      AppState.currentUser = result.data.userData;
-      AppState.currentUser.userId = result.data.userId;
-      AppState.currentUser.userLink = result.data.userLink;
-      
-      localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
-      showDashboard();
-      await loadShifts();
-      await updateStats();
-      
-      // Mostra il link utente
-      showSuccessModal(
-        'Benvenuto!',
-        `Il tuo link personale è: ${result.data.userLink}`,
-        [
-          { type: 'success', message: 'Account creato con successo' }
-        ]
-      );
-    } else {
-      throw new Error(result.message || 'Errore nella creazione dell\'account');
-    }
-    
-  } catch (error) {
-    console.error('Errore nella creazione utente:', error);
-    showError(error.message || 'Errore nella creazione dell\'account');
-  } finally {
-    hideLoadingOverlay();
-  }
-});
+function startWithoutLogin() {
+  showDashboard();
+}
+
+/**
+ * Logout utente (ora non necessario)
+ */
+function logout() {
+  // Non serve più logout, ma mantengo la funzione per compatibilità
+  showWelcomeScreen();
+}
 
 /**
  * Carica i turni disponibili
@@ -344,9 +262,9 @@ function openBookingModal(shiftId) {
   
   // Reset form
   document.getElementById('bookingForm').reset();
-  document.getElementById('enableEmailNotification').checked = !!AppState.currentUser?.email;
-  document.getElementById('enableDiscordNotification').checked = !!AppState.currentUser?.discordId;
-  document.getElementById('enableCalendarEvent').checked = !!AppState.currentUser?.email;
+  document.getElementById('enableEmailNotification').checked = true;
+  document.getElementById('enableDiscordNotification').checked = true;
+  document.getElementById('enableCalendarEvent').checked = true;
   
   showModal(elements.bookingModal);
 }
@@ -365,16 +283,24 @@ function closeBookingModal() {
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
-  if (!AppState.currentUser || !AppState.currentShift) {
-    showError('Errore: utente o turno non valido');
+  if (!AppState.currentShift) {
+    showError('Errore: turno non valido');
     return;
   }
   
   const formData = new FormData(e.target);
   const userInfo = {
-    ...AppState.currentUser,
+    name: formData.get('name'),
+    email: formData.get('email'),
+    discordId: formData.get('discordId'),
     notes: formData.get('notes')
   };
+  
+  // Validazione nome obbligatorio
+  if (!userInfo.name || userInfo.name.trim() === '') {
+    showError('Il nome è obbligatorio per prenotare un turno');
+    return;
+  }
   
   const enableEmail = document.getElementById('enableEmailNotification').checked;
   const enableDiscord = document.getElementById('enableDiscordNotification').checked;
@@ -410,12 +336,6 @@ document.getElementById('bookingForm').addEventListener('submit', async function
         'Il tuo turno è stato prenotato con successo.',
         result.data.notifications || []
       );
-      
-      // Salva la prenotazione nell'utente
-      if (result.data.userInfo) {
-        AppState.currentUser = result.data.userInfo;
-        localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
-      }
       
     } else {
       throw new Error(result.message || 'Errore nella prenotazione');
@@ -603,7 +523,7 @@ function hideDemoBanner() {
 
 // Auto-refresh dei turni ogni 5 minuti
 setInterval(async () => {
-  if (AppState.currentUser) {
+  if (elements.dashboard.style.display !== 'none') {
     await loadShifts();
     await updateStats();
   }

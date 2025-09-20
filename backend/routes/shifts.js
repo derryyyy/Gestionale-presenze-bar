@@ -90,10 +90,8 @@ router.post('/:id/book', async (req, res) => {
       });
     }
 
-    // Genera ID utente univoco se non fornito
-    if (!userInfo.userId) {
-      userInfo.userId = uuidv4();
-    }
+    // Genera ID utente univoco per la prenotazione
+    userInfo.userId = uuidv4();
 
     // Prenota il turno
     const dataService = getDataService();

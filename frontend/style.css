@@ -195,6 +195,42 @@ body {
   font-size: 1.1rem;
 }
 
+.welcome-actions {
+  text-align: center;
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.welcome-info {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  text-align: left;
+}
+
+.welcome-info p {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.welcome-info p:last-child {
+  margin-bottom: 0;
+}
+
+.welcome-info i {
+  color: var(--primary-color);
+  width: 16px;
+}
+
 /* Forms */
 .user-form {
   text-align: left;
@@ -584,6 +620,20 @@ body {
   border-radius: var(--border-radius);
   padding: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.user-info-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.user-info-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
 }
 
 .notification-options {

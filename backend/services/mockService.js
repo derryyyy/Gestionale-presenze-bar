@@ -137,22 +137,9 @@ class MockService {
    * Controlla conflitti per un utente
    */
   checkUserConflicts(userId, date, startTime, endTime) {
-    const userShifts = this.shifts.filter(shift => 
-      shift.status === 'Prenotato' && 
-      shift.user && 
-      shift.date === date
-    );
-
-    if (userShifts.length > 0) {
-      throw new Error('Hai già un turno prenotato per questa data');
-    }
-
-    // Controlla sovrapposizioni temporali
-    for (const existingShift of userShifts) {
-      if (this.hasTimeConflict(startTime, endTime, existingShift.startTime, existingShift.endTime)) {
-        throw new Error('Conflitto orario con turno già prenotato');
-      }
-    }
+    // Per semplicità nella demo, non controlliamo conflitti multipli
+    // In produzione si potrebbe implementare un controllo più sofisticato
+    console.log(`[DEMO] Controllo conflitti per utente ${userId} il ${date} dalle ${startTime} alle ${endTime}`);
   }
 
   /**

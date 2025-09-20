@@ -35,41 +35,21 @@
             <div class="welcome-screen" id="welcomeScreen">
                 <div class="welcome-card">
                     <div class="welcome-icon">
-                        <i class="fas fa-users"></i>
+                        <i class="fas fa-coffee"></i>
                     </div>
-                    <h2>Benvenuto nel Gestionale Turni</h2>
-                    <p>Gestisci i tuoi turni in modo semplice e veloce. Inserisci le tue informazioni per iniziare.</p>
+                    <h2>Benvenuto nel Gestionale Turni Bar</h2>
+                    <p>Prenota i tuoi turni in modo semplice e veloce. Nessuna registrazione richiesta!</p>
                     
-                    <form class="user-form" id="userForm">
-                        <div class="form-group">
-                            <label for="userName">Nome *</label>
-                            <input type="text" id="userName" name="name" required placeholder="Il tuo nome">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="userEmail">Email (opzionale)</label>
-                            <input type="email" id="userEmail" name="email" placeholder="la.tua@email.com">
-                            <small>Per ricevere notifiche e aggiungere eventi al calendario</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="userDiscord">Discord ID (opzionale)</label>
-                            <input type="text" id="userDiscord" name="discordId" placeholder="username#1234">
-                            <small>Per ricevere notifiche su Discord</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="enableNotifications" checked>
-                                <span class="checkmark"></span>
-                                Abilita notifiche automatiche
-                            </label>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-arrow-right"></i> Inizia
+                    <div class="welcome-actions">
+                        <button class="btn btn-primary btn-large" onclick="startWithoutLogin()">
+                            <i class="fas fa-calendar-plus"></i> Vedi Turni Disponibili
                         </button>
-                    </form>
+                        
+                        <div class="welcome-info">
+                            <p><i class="fas fa-info-circle"></i> Puoi prenotare turni direttamente senza creare un account</p>
+                            <p><i class="fas fa-bell"></i> Inserisci email e Discord solo se vuoi ricevere notifiche</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -182,9 +162,30 @@
                 </div>
                 
                 <form class="booking-form" id="bookingForm">
-                    <div class="form-group">
-                        <label for="bookingNotes">Note (opzionale)</label>
-                        <textarea id="bookingNotes" name="notes" placeholder="Aggiungi note o informazioni aggiuntive..."></textarea>
+                    <div class="user-info-section">
+                        <h4>I Tuoi Dati</h4>
+                        
+                        <div class="form-group">
+                            <label for="bookingUserName">Nome *</label>
+                            <input type="text" id="bookingUserName" name="name" required placeholder="Il tuo nome">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bookingUserEmail">Email (opzionale)</label>
+                            <input type="email" id="bookingUserEmail" name="email" placeholder="la.tua@email.com">
+                            <small>Per ricevere conferme e notifiche</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bookingUserDiscord">Discord ID (opzionale)</label>
+                            <input type="text" id="bookingUserDiscord" name="discordId" placeholder="username#1234">
+                            <small>Per ricevere notifiche su Discord</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bookingNotes">Note (opzionale)</label>
+                            <textarea id="bookingNotes" name="notes" placeholder="Aggiungi note o informazioni aggiuntive..."></textarea>
+                        </div>
                     </div>
                     
                     <div class="notification-options">
