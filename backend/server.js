@@ -102,7 +102,7 @@ async function initializeServices() {
       await notionService.initialize();
       console.log('✅ Servizio Notion inizializzato');
     } else {
-      console.warn('⚠️  Servizio Notion non configurato');
+      console.warn('⚠️  Servizio Notion non configurato - modalità DEMO attiva');
     }
 
     // Verifica configurazione Discord
@@ -110,17 +110,18 @@ async function initializeServices() {
       await discordService.initialize();
       console.log('✅ Servizio Discord inizializzato');
     } else {
-      console.warn('⚠️  Servizio Discord non configurato');
+      console.warn('⚠️  Servizio Discord non configurato - notifiche simulate');
     }
 
     // Verifica configurazione Google Calendar
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       console.log('✅ Configurazione Google Calendar pronta');
     } else {
-      console.warn('⚠️  Google Calendar non configurato');
+      console.warn('⚠️  Google Calendar non configurato - eventi simulati');
     }
 
     console.log('🎉 Tutti i servizi inizializzati correttamente');
+    console.log('📝 Modalità DEMO: usa dati mock per testare l\'interfaccia');
   } catch (error) {
     console.error('❌ Errore durante l\'inizializzazione dei servizi:', error);
   }

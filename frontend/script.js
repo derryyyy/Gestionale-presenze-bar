@@ -190,14 +190,19 @@ async function loadShifts() {
     const response = await fetch('/api/shifts');
     const result = await response.json();
     
-    if (result.success) {
-      AppState.shifts = result.data;
-      AppState.filteredShifts = [...AppState.shifts];
-      renderShifts();
-      updateLocationFilter();
-    } else {
-      throw new Error(result.message || 'Errore nel caricamento dei turni');
-    }
+      if (result.success) {
+        AppState.shifts = result.data;
+        AppState.filteredShifts = [...AppState.shifts];
+        renderShifts();
+        updateLocationFilter();
+        
+        // Mostra banner demo se in modalità demo
+        if (result.demo) {
+          showDemoBanner();
+        }
+      } else {
+        throw new Error(result.message || 'Errore nel caricamento dei turni');
+      }
     
   } catch (error) {
     console.error('Errore nel caricamento turni:', error);
@@ -564,6 +569,37 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+
+/**
+ * Mostra banner di demo
+ */
+function showDemoBanner() {
+  const banner = document.createElement('div');
+  banner.id = 'demoBanner';
+  banner.innerHTML = `
+    <div class="demo-banner">
+      <div class="demo-content">
+        <i class="fas fa-info-circle"></i>
+        <span><strong>Modalità DEMO</strong> - Stai utilizzando dati simulati. Per configurare i servizi reali, segui la guida SETUP.md</span>
+      </div>
+      <button class="demo-close" onclick="hideDemoBanner()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+  
+  document.body.insertBefore(banner, document.body.firstChild);
+}
+
+/**
+ * Nasconde banner di demo
+ */
+function hideDemoBanner() {
+  const banner = document.getElementById('demoBanner');
+  if (banner) {
+    banner.remove();
+  }
+}
 
 // Auto-refresh dei turni ogni 5 minuti
 setInterval(async () => {

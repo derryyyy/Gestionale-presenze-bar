@@ -9,7 +9,13 @@ const notionService = require('../services/notionService');
 const calendarService = require('../services/calendarService');
 const discordService = require('../services/discordService');
 const emailService = require('../services/emailService');
+const mockService = require('../services/mockService');
 const { v4: uuidv4 } = require('uuid');
+
+// Determina quale servizio usare
+const getDataService = () => {
+  return (process.env.NOTION_TOKEN && process.env.NOTION_DATABASE_ID) ? notionService : mockService;
+};
 
 /**
  * GET /api/shifts
@@ -17,11 +23,13 @@ const { v4: uuidv4 } = require('uuid');
  */
 router.get('/', async (req, res) => {
   try {
-    const shifts = await notionService.getShifts();
+    const dataService = getDataService();
+    const shifts = await dataService.getShifts();
     res.json({
       success: true,
       data: shifts,
-      count: shifts.length
+      count: shifts.length,
+      demo: !(process.env.NOTION_TOKEN && process.env.NOTION_DATABASE_ID)
     });
   } catch (error) {
     console.error('Errore nel recupero turni:', error);
@@ -40,7 +48,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const shift = await notionService.getShiftById(id);
+    const dataService = getDataService();
+    const shift = await dataService.getShiftById(id);
     
     if (!shift) {
       return res.status(404).json({
@@ -86,8 +95,9 @@ router.post('/:id/book', async (req, res) => {
       userInfo.userId = uuidv4();
     }
 
-    // Prenota il turno su Notion
-    const bookingResult = await notionService.bookShift(id, userInfo);
+    // Prenota il turno
+    const dataService = getDataService();
+    const bookingResult = await dataService.bookShift(id, userInfo);
     
     if (!bookingResult.success) {
       return res.status(400).json(bookingResult);
@@ -96,12 +106,21 @@ router.post('/:id/book', async (req, res) => {
     const notifications = [];
 
     // Invio notifica Discord se abilitato
-    if (enableDiscord && discordService.isReady()) {
+    if (enableDiscord) {
       try {
-        const discordResult = await discordService.sendBookingNotification(
-          bookingResult.shift, 
-          userInfo
-        );
+        let discordResult;
+        if (discordService.isReady()) {
+          discordResult = await discordService.sendBookingNotification(
+            bookingResult.shift, 
+            userInfo
+          );
+        } else {
+          // Usa mock service per demo
+          discordResult = await mockService.sendDiscordNotification(
+            bookingResult.shift, 
+            userInfo
+          );
+        }
         notifications.push({
           type: 'discord',
           success: discordResult.success,
@@ -118,12 +137,21 @@ router.post('/:id/book', async (req, res) => {
     }
 
     // Invio email se abilitato
-    if (enableEmail && emailService.isReady() && userInfo.email) {
+    if (enableEmail && userInfo.email) {
       try {
-        const emailResult = await emailService.sendBookingConfirmation(
-          bookingResult.shift, 
-          userInfo
-        );
+        let emailResult;
+        if (emailService.isReady()) {
+          emailResult = await emailService.sendBookingConfirmation(
+            bookingResult.shift, 
+            userInfo
+          );
+        } else {
+          // Usa mock service per demo
+          emailResult = await mockService.sendEmailNotification(
+            bookingResult.shift, 
+            userInfo
+          );
+        }
         notifications.push({
           type: 'email',
           success: emailResult.success,
@@ -142,13 +170,28 @@ router.post('/:id/book', async (req, res) => {
     // Gestione Google Calendar se abilitato
     if (enableCalendar && userInfo.email) {
       try {
-        // Genera URL di autorizzazione per Google Calendar
-        const authUrl = calendarService.generateAuthUrl(userInfo.userId);
+        let calendarResult;
+        if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+          // Genera URL di autorizzazione per Google Calendar
+          const authUrl = calendarService.generateAuthUrl(userInfo.userId);
+          calendarResult = {
+            success: true,
+            message: 'Autorizzazione Google Calendar richiesta',
+            authUrl: authUrl
+          };
+        } else {
+          // Usa mock service per demo
+          calendarResult = await mockService.createCalendarEvent(
+            bookingResult.shift, 
+            userInfo
+          );
+        }
         notifications.push({
           type: 'calendar',
-          success: true,
-          message: 'Autorizzazione Google Calendar richiesta',
-          authUrl: authUrl
+          success: calendarResult.success,
+          message: calendarResult.message,
+          ...(calendarResult.authUrl && { authUrl: calendarResult.authUrl }),
+          ...(calendarResult.eventUrl && { eventUrl: calendarResult.eventUrl })
         });
       } catch (calendarError) {
         console.error('Errore Google Calendar:', calendarError);
@@ -280,7 +323,8 @@ router.delete('/:id/book', async (req, res) => {
  */
 router.get('/stats', async (req, res) => {
   try {
-    const stats = await notionService.getStats();
+    const dataService = getDataService();
+    const stats = await dataService.getStats();
     res.json({
       success: true,
       data: stats
@@ -303,7 +347,8 @@ router.get('/available', async (req, res) => {
   try {
     const { date, location, limit } = req.query;
     
-    let shifts = await notionService.getShifts();
+    const dataService = getDataService();
+    let shifts = await dataService.getShifts();
     
     // Filtro per data se specificato
     if (date) {
